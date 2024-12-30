@@ -1,12 +1,11 @@
-import React from "react";
 import { Sidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { NavLink, useLocation } from "react-router-dom";
 
 // Icons
-import DashboardIcon from "../assets/dashboard.svg?react";
-import OrderIcon from "../assets/order.svg?react";
-import ProductIcon from "../assets/product.svg?react";
-import Logo from "../assets/men.png";
+import DashboardIcon from "../../assets/dashboard.svg?react";
+import OrderIcon from "../../assets/order.svg?react";
+import ProductIcon from "../../assets/product.svg?react";
+import Logo from "../../assets/men.png";
 
 function MenuItemComponent({ icon, link }: { icon: any; link: string }) {
   const location = useLocation();
@@ -27,7 +26,7 @@ function MenuItemComponent({ icon, link }: { icon: any; link: string }) {
 
 export default function SideBar() {
   return (
-    <div className="bg-white w-80 border-r border-gray-200 h-screen">
+    <div className="sticky top-0  bg-white border-r border-gray-200 h-screen w-fit">
       <div className="flex justify-center items-center h-16 my-5">
         <img src={Logo} alt="Logo" className="h-12" />
       </div>

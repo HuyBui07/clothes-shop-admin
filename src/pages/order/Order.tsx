@@ -1,29 +1,32 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 
-// components
-import Header from "../components/layouts/Header";
-import InfoContainer from "../components/InfoContainer";
-import StatusContainer from "../components/StatusContainer";
-import Table from "../components/Table";
-
-// icons
-import Earning from "../assets/earning.svg?react";
-import Order from "../assets/order.svg?react";
-import Product from "../assets/product.svg?react";
-import Customer from "../assets/customer.svg?react";
-
-// Modal
-import InfoOrder from "./order/OrderDetails";
+//pages and components
+import Table from "../../components/Table";
+import StatusContainer from "../../components/StatusContainer";
+import Header from "../../components/layouts/Header";
+import InfoOrder from "./OrderDetails";
 
 // utils
-import { formatPrice } from "../utills";
+import { formatPrice } from "../../utills";
 
-export default function Dashboard() {
+function SaleOrdersPage() {
   const navigate = useNavigate();
-
+  const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+    total: 0,
+  });
+
+  const handleSearch = async () => {};
+
+  const statusOptions = ["PROCESSING", "DELIVERING", "COMPLETED", "CANCELLED"];
+
+  //get all sale orders
+  useEffect(() => {}, []);
 
   const [saleOrders, setSaleOrders] = useState([
     {
@@ -127,42 +130,25 @@ export default function Dashboard() {
       )}
       <div className="flex flex-col h-full w-full overflow-y-auto">
         <Header />
-
-        <div className="px-16 py-11 flex flex-col gap-5">
-          <div className="flex gap-5">
-            <InfoContainer title="Earning" info={1000} icon={<Earning />} />
-            <InfoContainer title="Order" info={100} icon={<Order />} />
-          </div>
-
-          <div className="flex gap-5">
-            <InfoContainer title="Product" info={50} icon={<Product />} />
-            <InfoContainer title="Customer" info={10} icon={<Customer />} />
-          </div>
-        </div>
-
-        <div className="flex flex-row justify-between items-center mt-4 px-16">
-          <label>Newest Orders</label>
-          <span
-            onClick={() => navigate("/order")}
-            className="text-base font-medium hover:cursor-pointer hover:underline"
-          >
-            View All {">>>"}
-          </span>
-        </div>
-
-        <div className="mx-16">
+        <div className="mt-12 mx-16">
           <Table
+            className="table"
             columns={productColumns}
             rows={saleOrders}
-            noCheckboxSelection
-            setModalState={setIsModalOpen}
-            setSelectedOrderId={setSelectedOrderId}
             cellName="id"
             identifyRoute="id"
-            longNavigate
+            setModalState={setIsModalOpen}
+            setSelectedOrderId={setSelectedOrderId}
+            noCheckboxSelection
+            paginationModel={paginationModel}
+            onPaginationModelChange={(paginationModel: any) =>
+              setPaginationModel(paginationModel)
+            }
           />
         </div>
       </div>
     </>
   );
 }
+
+export default SaleOrdersPage;
