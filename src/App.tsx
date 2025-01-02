@@ -28,10 +28,19 @@ function App() {
       <SideBar />
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/order" element={<Order />} />
+        <Route
+          path="/dashboard"
+          element={<Dashboard setIsAuthModalOpen={setIsAuthModalOpen} />}
+        />
+        <Route
+          path="/order"
+          element={<Order setIsAuthModalOpen={setIsAuthModalOpen} />}
+        />
         <Route path="/order/:id" element={<OrderDetails />} />
-        <Route path="/product" element={<Product />} />
+        <Route
+          path="/product"
+          element={<Product setIsAuthModalOpen={setIsAuthModalOpen} />}
+        />
       </Routes>
     </>
   );

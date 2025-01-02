@@ -1,19 +1,14 @@
 import { DataGrid } from "@mui/x-data-grid";
-import { useNavigate, useLocation } from "react-router-dom";
 
 function Table(props: any) {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const cellName = props.cellName;
-  const longNavigate = props.longNavigate;
   const noCheckboxSelection = props.noCheckboxSelection;
   const disableRowSelectionOnClick = props.disableRowSelectionOnClick || false;
   const identifyRoute = props.identifyRoute;
   const setModalOpen = props.setModalState;
-  const setSelectedOrderId = props.setSelectedOrderId;
+  const setSelectedProductId = props.setSelectedProductId;
 
   const handlePaginationChange = (params: any) => {
+    console.log(params.page);
     if (props.paginationModel.page !== params.page) {
       props.onPaginationModelChange({
         ...props.paginationModel,
@@ -28,28 +23,17 @@ function Table(props: any) {
         if (params.field === identifyRoute) {
           event.stopPropagation();
         }
-        if (setModalOpen) {
+        if (setModalOpen && (params.field === "name" || params.field === "id")) {
           setModalOpen(true);
-          setSelectedOrderId(params.row[identifyRoute]);
+          console.log(params.row[identifyRoute]);
+          setSelectedProductId(params.row[identifyRoute]);
           return;
-        }
-        if (
-          params.field === cellName &&
-          (params.field === "name" || params.field === "id")
-        ) {
-          if (longNavigate) {
-            navigate("/orders/" + params.row[identifyRoute]);
-          } else {
-            navigate(location.pathname + "/" + params.row[identifyRoute]);
-          }
-        }
-        if (params.field === cellName && params.field === "amount") {
-          event.stopPropagation();
         }
       };
 
   return (
-    <div className="w-full h-full mt-2 mb-10">
+    <div className="w-full h-full mt-2 mb-5">
+
       <DataGrid
         className="w-auto"
         paginationMode="server"
@@ -71,6 +55,7 @@ function Table(props: any) {
           },
           "& .MuiDataGrid-cell": {
             border: "1px solid #EAECF0",
+            cursor: "pointer",
           },
           "& .MuiDataGrid-columnHeader": {
             backgroundColor: "#EAECF0",

@@ -2,10 +2,10 @@ import { useState } from "react";
 
 // commponents
 import BackIcon from "../../assets/back.svg?react";
+import LoadingScreen from "../../components/LoadingScreen";
 
 // icons
 import { FaTimes } from "react-icons/fa";
-import { ImImages } from "react-icons/im";
 import { API_CONST } from "../../constants";
 
 type Size = {
@@ -21,7 +21,11 @@ type Stock = {
 export default function NewProduct(props: any) {
   // props
   const setIsModalOpen = props.setIsModalOpen;
+  const newProductAdded = props.newProductAdded;
+  const setNewProductAdded = props.setNewProductAdded;
   const commomSizes = ["XS", "S", "M", "L", "XL", "XXL"];
+
+  const [isLoading, setIsLoading] = useState(false);
 
   // Input actions
   const [productName, setProductName] = useState("");
@@ -144,12 +148,21 @@ export default function NewProduct(props: any) {
       return false;
     }
 
-    if (stocks.some((stock) => !stock.color || stock.color == "" || stock.sizes.length < 1)) {
+    if (
+      stocks.some(
+        (stock) => !stock.color || stock.color == "" || stock.sizes.length < 1
+      )
+    ) {
       alert("Please fill in all stock fields.");
       return false;
     }
 
-    if (stocks.some((stock) => stock.sizes.some((size) => !size.size || size.size == ""))) {
+    if (
+      stocks.some((stock) =>
+        stock.sizes.some((size) => !size.size || size.size == "")
+      )
+    ) {
+      
       alert("Please fill in all size fields.");
       return false;
     }
@@ -159,10 +172,21 @@ export default function NewProduct(props: any) {
       return false;
     }
 
+    stocks.forEach((stock) => {
+      stock.sizes = stock.sizes.sort((a, b) => {
+        if (commomSizes.indexOf(a.size) < commomSizes.indexOf(b.size))
+          return -1;
+        if (commomSizes.indexOf(a.size) > commomSizes.indexOf(b.size))
+          return 1;
+        return 0;
+      });
+    });
+
     return true;
-  }
+  };
 
   const handleAddProduct = async () => {
+    setIsLoading(true);
     if (!isProductValid()) return;
 
     const formData = new FormData();
@@ -175,7 +199,6 @@ export default function NewProduct(props: any) {
     formData.append("variants", JSON.stringify(stocks));
     formData.append("description", description);
     formData.append("material", material);
-    
 
     const response = await fetch(API_CONST + "/product/create", {
       method: "POST",
@@ -184,7 +207,7 @@ export default function NewProduct(props: any) {
       },
       body: formData,
     });
-    
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -192,13 +215,16 @@ export default function NewProduct(props: any) {
     }
 
     if (response.ok) {
-      alert("Product added successfully" + data.message);
+      setIsLoading(false);
+      alert("Product added successfully!");
+      setNewProductAdded(!newProductAdded);
       setIsModalOpen(false);
     }
   };
 
   return (
     <div className="bg-gray-500 bg-opacity-30 flex flex-col justify-center items-center h-full w-full fixed top-0 left-0 z-10 ">
+      {isLoading && <LoadingScreen />}
       <div className="flex flex-col w-2/3 bg-white p-5 border border-gray-500 rounded-xl overflow-y-auto my-5">
         <button
           className="flex justify-center items-center bg-white border border-black rounded-lg hover:bg-black hover:text-white mb-5 w-48"
@@ -279,7 +305,7 @@ export default function NewProduct(props: any) {
               alert("Price cannot be negative");
               return;
             }
-            setPrice(Number(e.target.value))
+            setPrice(Number(e.target.value));
           }}
         />
 

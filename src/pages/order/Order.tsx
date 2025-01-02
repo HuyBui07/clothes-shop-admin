@@ -1,17 +1,29 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
 //pages and components
 import Table from "../../components/Table";
 import StatusContainer from "../../components/StatusContainer";
 import Header from "../../components/layouts/Header";
 import InfoOrder from "./OrderDetails";
+import SearchBar from "../../components/SearchBar";
+import { ClipLoader } from "react-spinners";
 
 // utils
 import { formatPrice } from "../../utills";
+import { API_CONST } from "../../constants";
 
-function SaleOrdersPage() {
-  const navigate = useNavigate();
+type SaleOrder = {
+  id: string;
+  customerPhone: string;
+  customerEmail: string;
+  total: number;
+  date: string;
+  status: string;
+};
+
+function SaleOrdersPage(props: any) {
+  const setIsAuthModalOpen = props.setIsAuthModalOpen;
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState("");
@@ -23,85 +35,104 @@ function SaleOrdersPage() {
 
   const handleSearch = async () => {};
 
-  const statusOptions = ["PROCESSING", "DELIVERING", "COMPLETED", "CANCELLED"];
+  const statusOptions = [
+    "PENDING",
+    "PROCESSING",
+    "DELIVERING",
+    "COMPLETED",
+    "CANCELLED",
+  ];
+
+  const [saleOrders, setSaleOrders] = useState<SaleOrder[]>([]);
 
   //get all sale orders
-  useEffect(() => {}, []);
+  const [ordersChanged, setOrdersChanged] = useState(false);
 
-  const [saleOrders, setSaleOrders] = useState([
-    {
-      id: "1",
-      customerPhone: "0123456789",
-      customerEmail: "john.doe@example.com",
-      total: 100000,
-      date: "2021-09-01",
-      status: "pending",
-    },
-    {
-      id: "2",
-      customerPhone: "0123456789",
-      customerEmail: "jane.doe@example.com",
-      total: 200000,
-      date: "2021-09-02",
-      status: "completed",
-    },
-    {
-      id: "3",
-      customerPhone: "0123456789",
-      customerEmail: "john.doe@example.com",
-      total: 300000,
-      date: "2021-09-03",
-      status: "completed",
-    },
-    {
-      id: "4",
-      customerPhone: "0123456789",
-      customerEmail: "jane.doe@example.com",
-      total: 400000,
-      date: "2021-09-04",
-      status: "pending",
-    },
-    {
-      id: "5",
-      customerPhone: "0123456789",
-      customerEmail: "john.doe@example.com",
-      total: 500000,
-      date: "2021-09-05",
-      status: "completed",
-    },
-    {
-      id: "6",
-      customerPhone: "0123456789",
-      customerEmail: "jane.doe@example.com",
-      total: 600000,
-      date: "2021-09-06",
-      status: "pending",
-    },
+  const [isCompletedIncluded, setIsCompletedIncluded] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const fetchSaleOrders = async (
+    page: number,
+    size: number,
+    isCompletedIncluded: boolean
+  ) => {
+    setSaleOrders([]);
+    setLoading(true);
+    try {
+      const response = await fetch(
+        API_CONST +
+          `/order/get-all-admin?page=${
+            page + 1
+          }&size=${size}&isCompletedIncluded=${isCompletedIncluded}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminAccessToken")}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSaleOrders(data.data);
+        setPaginationModel({
+          ...paginationModel,
+          total: data.totalOrder,
+        });
+        setLoading(false);
+      } else {
+        if (data.status === "UNAUTHORIZED") {
+          setIsAuthModalOpen(true);
+          setLoading(false);
+        }
+      }
+    } catch (error: any) {
+      if (error.status === "UNAUTHORIZED") {
+        setIsAuthModalOpen(true);
+        setLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    console.log("fetching orders");
+    fetchSaleOrders(
+      paginationModel.page,
+      paginationModel.pageSize,
+      isCompletedIncluded
+    );
+  }, [
+    paginationModel.page,
+    paginationModel.pageSize,
+    ordersChanged,
+    isCompletedIncluded,
   ]);
 
   const productColumns = [
     {
       field: "id",
       headerName: "ID",
-      flex: 0.1,
-      headerClassName: "bg-gray-100",
+      flex: 0.3,
+      headerClassName: "bg-gray-100 hover:cursor-pointer",
     },
     {
       field: "customerPhone",
-      headerName: "Customer's phone number",
-      flex: 0.5,
+      headerName: "Customer's phone",
+      flex: 0.3,
       headerClassName: "bg-gray-100",
     },
     {
       field: "customerEmail",
       headerName: "Customer's email",
       headerClassName: "bg-gray-100",
-      flex: 0.5,
+      flex: 0.3,
     },
     {
       field: "total",
       headerName: "Total",
-      flex: 0.4,
+      flex: 0.3,
       headerClassName: "bg-gray-100",
       valueGetter: (params: any) => formatPrice(params),
     },
@@ -110,15 +141,75 @@ function SaleOrdersPage() {
       headerName: "Date",
       headerClassName: "bg-gray-100",
       flex: 0.2,
+      valueGetter: (params: any) => {
+        const date = new Date(params);
+        return date.toLocaleDateString();
+      },
     },
     {
       field: "status",
       headerName: "Status",
-      flex: 0.4,
+      flex: 0.35,
       headerClassName: "bg-gray-100",
       renderCell: (params: any) => <StatusContainer status={params.value} />,
     },
   ];
+
+  const [option, setOption] = useState("id");
+  const [searchedOrders, setSearchedOrders] = useState<SaleOrder[]>([]);
+
+  const options = [
+    { value: "id", label: "ID" },
+    { value: "phone", label: "Phone" },
+    { value: "email", label: "Email" },
+  ];
+
+
+
+  const fetchSearchedOrders = async (
+    searchQuery: string,
+    option: string,
+    isCompletedIncluded: boolean
+  ) => {
+    setSearchedOrders([]);
+    setLoading(true);
+    try {
+      const response = await fetch(
+        API_CONST +
+          `/order/search?searchQuery=${searchQuery}&option=${option}&isCompletedIncluded=${isCompletedIncluded}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("adminAccessToken")}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSearchedOrders(data.data);
+        setLoading(false);
+      } else {
+        if (data.status === "UNAUTHORIZED") {
+          setIsAuthModalOpen(true);
+          setLoading(false);
+        }
+      }
+    } catch (error: any) {
+      if (error.status === "UNAUTHORIZED") {
+        setIsAuthModalOpen(true);
+        setLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (searchQuery !== "") {
+      fetchSearchedOrders(searchQuery, option, isCompletedIncluded);
+    }
+  }, [searchQuery, option, isCompletedIncluded]);
 
   return (
     <>
@@ -126,25 +217,66 @@ function SaleOrdersPage() {
         <InfoOrder
           setIsModalOpen={setIsModalOpen}
           selectedOrderId={selectedOrderId}
+          ordersChanged={ordersChanged}
+          setOrdersChanged={setOrdersChanged}
         />
       )}
       <div className="flex flex-col h-full w-full overflow-y-auto">
         <Header />
-        <div className="mt-12 mx-16">
-          <Table
-            className="table"
-            columns={productColumns}
-            rows={saleOrders}
-            cellName="id"
-            identifyRoute="id"
-            setModalState={setIsModalOpen}
-            setSelectedOrderId={setSelectedOrderId}
-            noCheckboxSelection
-            paginationModel={paginationModel}
-            onPaginationModelChange={(paginationModel: any) =>
-              setPaginationModel(paginationModel)
-            }
-          />
+        <div className="flex flex-col w-full gap-3 px-16 py-11">
+          <div className="w-full flex flex-row">
+            <SearchBar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              setOption={setOption}
+              options={options}
+            />
+            <div className="flex flex-row gap-2 items-center ml-5">
+              <input
+                type="checkbox"
+                className="h-4 w-4"
+                onClick={() => setIsCompletedIncluded(!isCompletedIncluded)}
+              />
+              <p className="text-gray-400">Exlude Completed Orders</p>
+            </div>
+          </div>
+          {loading && (
+            <ClipLoader
+              className="m-auto mt-48"
+              color="#000"
+              loading={loading}
+              size={100}
+            />
+          )}
+          {searchQuery == ""
+            ? saleOrders.length != 0 && (
+                <Table
+                  className="table"
+                  columns={productColumns}
+                  rows={saleOrders}
+                  cellName="id"
+                  identifyRoute="id"
+                  setModalState={setIsModalOpen}
+                  setSelectedProductId={setSelectedOrderId}
+                  noCheckboxSelection
+                  paginationModel={paginationModel}
+                  onPaginationModelChange={(paginationModel: any) =>
+                    setPaginationModel(paginationModel)
+                  }
+                />
+              )
+            : searchedOrders.length != 0 && (
+                <Table
+                  className="table"
+                  columns={productColumns}
+                  rows={searchedOrders}
+                  cellName="id"
+                  identifyRoute="id"
+                  setModalState={setIsModalOpen}
+                  setSelectedProductId={setSelectedOrderId}
+                  noCheckboxSelection
+                />
+              )}
         </div>
       </div>
     </>

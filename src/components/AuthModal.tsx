@@ -32,6 +32,7 @@ export default function AuthModal({
         if (response.ok) {
           localStorage.setItem("adminAccessToken", data.access_token);
           setIsAuthModalOpen(false);
+          window.location.reload(); // Reload the window after successful login
         }
       });
     } catch (error: any) {
@@ -64,6 +65,7 @@ export default function AuthModal({
             setPassword(e.target.value);
           }}
         ></input>
+        {error && <p className="text-red-500 mb-5">{error}</p>}
         <button onClick={() => handleLogin()}>Login</button>
       </div>
     </div>

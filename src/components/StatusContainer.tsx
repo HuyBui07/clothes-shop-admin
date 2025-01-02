@@ -11,6 +11,10 @@ const StatusContainer = ({ status }: { status: string }) => {
           "rounded-2xl px-5 py-1 font-medium w-2/3 text-center text-sm " +
           (status === "pending"
             ? "bg-yellow-200 text-yellow-800"
+            : status === "processing"
+            ? "bg-blue-200 text-blue-800"
+            : status === "delivering"
+            ? "bg-purple-200 text-purple-800"
             : status === "completed"
             ? "bg-green-200 text-green-800"
             : status === "cancelled"
